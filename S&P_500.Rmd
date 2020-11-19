@@ -38,7 +38,12 @@ After gathering the initial dataset, I wanted to create the first calculation in
 
 
 ```{r pressure, echo=FALSE}
-sp %>% mutate(percent_change = ((close-open)/open)*100)
+sp %>% mutate(percent_change = ((close-open)/open)*100) 
+
+sp$month_yr <- format(as.Date(sp$date), "%Y-%m")
+
+sp
+  
 ```
 
 
@@ -51,9 +56,6 @@ Things to do:
 -->
 
 <!-- trying the code below to get the stocks that are the top changes by year -->
-
-sp$Month_Yr <- format(as.Date(sp$date), "%Y-%m")
-
 
   
 sp %>% 
