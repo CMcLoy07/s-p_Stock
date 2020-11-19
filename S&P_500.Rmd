@@ -1,0 +1,66 @@
+---
+title: 'ADA: A&A'
+author: "Chris McLoy"
+date: "11/12/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(scales)
+library(readr)
+library(forcats)
+library(broom)
+library(dplyr)
+library(tidyquant)
+library(lubridate)
+```
+
+## S&P 500 Executive Summary
+
+  Stocks are watched day in and day out by millions around the world. Questions around which stock to buy, is the stock market going to crash, or how well are things preforming circle the minds of people everywhere. The following data set and analysis surrounds the S&P 500 from 2014 through 2017. In order to tell which stocks preformed the best over these years, analysis and visulizations are preformed to solve that question. 
+
+## Intro
+  
+  Everyone wants to retire early and with current COVID situations, the stock market has gone through some crazy adjustments over the past 9 months. Due to this, I obtained the S&P data to really dive in for the 4 years of information to see what each did in a year without a pandemic. Are some stocks that are seen as great preform as expected or do others stand out over these 4 years? 
+  
+## Data 
+
+  The data on the S&P 500 stocks ranges from 2014 through 2017. Each day a record was made that covered the open, close, high price, low price, and the volumne traded. This equated to over 490,000 rows of data. The table below gives a snap shot of the data frame that is being reviewed. 
+
+```{r S&P 500, eval= T, echo= F}
+sp <- read.csv("s&p.csv")
+tibble(sp)
+```
+
+After gathering the initial dataset, I wanted to create the first calculation in which would help answer the question of which stocks preformed the best from the start of the year to the end of the year. In order to do this I took the % change of the stock by day from open to close. 
+
+
+```{r pressure, echo=FALSE}
+sp %>% mutate(percent_change = ((close-open)/open)*100)
+```
+
+
+<!-- 
+Things to do: 
+-view top 10 symbols that have the best % change by month for the 4 years
+- graph the top 10
+-check out lags for dplyr 
+-append a column that is sector for seasonality 
+-->
+
+<!-- trying the code below to get the stocks that are the top changes by year -->
+
+sp$Month_Yr <- format(as.Date(sp$date), "%Y-%m")
+
+
+  
+sp %>% 
+  group_by(symbol, yr = year(date), mon = month(date)) %>%
+  summarize(percent = mean(percent_change))
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
