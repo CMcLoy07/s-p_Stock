@@ -19,33 +19,90 @@ library(lubridate)
 
 ## S&P 500 Executive Summary
 
-  Stocks are watched day in and day out by millions around the world. Questions around which stock to buy, is the stock market going to crash, or how well are things preforming circle the minds of people everywhere. The following data set and analysis surrounds the S&P 500 from 2014 through 2017. In order to tell which stocks preformed the best over these years, analysis and visulizations are preformed to solve that question. 
+Stocks are watched day in and day out by millions around the world. Questions around which stock to buy, is the stock market going to crash, or how well are things preforming circle the minds of people everywhere. The following data set and analysis surrounds the S&P 500 from 2014 through 2017. In order to tell which stocks preformed the best over these years, analysis and visualizations are preformed to solve that question. 
 
 ## Intro
   
-  Everyone wants to retire early and with current COVID situations, the stock market has gone through some crazy adjustments over the past 9 months. Due to this, I obtained the S&P data to really dive in for the 4 years of information to see what each did in a year without a pandemic. Are some stocks that are seen as great preform as expected or do others stand out over these 4 years? 
+Everyone wants to retire early and with current COVID situations, the stock market has gone through some crazy adjustments over the past 9 months. Due to this, I obtained the S&P data to really dive in for the 4 years of information to see what each did in a year without a pandemic. Are some stocks that are seen as great preform as expected or do others stand out over these 4 years? 
   
 ## Data 
 
-  The data on the S&P 500 stocks ranges from 2014 through 2017. Each day a record was made that covered the open, close, high price, low price, and the volumne traded. This equated to over 490,000 rows of data. The table below gives a snap shot of the data frame that is being reviewed. 
-
-```{r S&P 500, eval= T, echo= F}
-sp <- read.csv("s&p.csv")
-tibble(sp)
+```{r input, eval= T, echo= F}
+sp <- read_csv("s&p.csv")
 ```
 
-After gathering the initial dataset, I wanted to create the first calculation in which would help answer the question of which stocks preformed the best from the start of the year to the end of the year. In order to do this I took the % change of the stock by day from open to close. 
+
+The data on the S&P 500 stocks ranges from 2014 through 2017. Each record is a day and covers the open, close, high price, low price, and the volume traded. This equated to `r format(nrow(sp),big.mark=",")` rows of data. The table below gives a sample of the data frame that is being reviewed. 
+
+```{r sp-sample}
+sp %>% 
+  slice_sample(n=10) %>% 
+  knitr::kable()
+```
+
+After gathering the initial dataset, we wanted to create the first calculation in which would help answer the question of which stocks preformed the best from the start of the year to the end of the year. In order to do this I took the percent change of the stock by day from open to close. 
 
 
 ```{r pressure, echo=FALSE}
-sp %>% mutate(percent_change = ((close-open)/open)*100) 
+sp <- sp %>% 
+  mutate(percent_change = ((close-open)/open)*100,
+         month_yr = format(ymd(date), "%Y-%m")) 
 
-sp$month_yr <- format(as.Date(sp$date), "%Y-%m")
-
-sp
-  
 ```
 
+
+### Top Stocks
+
+Let's begin by looking at the stocks that have the best percent change by month for
+the four years. [More words here, Chris]
+
+```{r top-stocks}
+
+# I'm not 100% sure you mean what you write in the comment, since we don't have pct_change
+# by month. Nevertheless, I'm just your B-student R monkey. Who am I to reason why?
+
+monthly.change <- sp %>% 
+  group_by(symbol,month_yr) %>% 
+  mutate(month_day = 1:n(),
+         month_max_day = max(month_day)) %>% 
+  ungroup %>% 
+  mutate(month_open = if_else(month_day==1,
+                              open,
+                              -1), # just something smaller than any price
+         month_close = if_else(month_day==month_max_day,
+                               close,
+                               -1)) %>%  # Ditto
+  group_by(symbol, month_yr) %>% 
+  summarize(month_open = max(month_open),
+            month_close = max(month_close)) %>% 
+  mutate(percent_change = (month_close - month_open)/month_open)
+
+
+summary.table <- monthly.change %>% 
+  group_by(symbol) %>% 
+  summarize(mean_change = mean(percent_change),
+            median_change = median(percent_change)) %>% 
+  arrange(desc(median_change)) %>% 
+  mutate(symbol = fct_reorder(symbol,median_change))
+
+
+summary.table %>% 
+  head(15) %>% 
+  knitr::kable(digits=3,col.names=c("Stock","Mean % Change","Median % Change"))
+
+
+ggplot(summary.table %>% 
+         filter(median_change > 0.0275),
+       aes(x=median_change,y=symbol)) + 
+  geom_point() + 
+  theme_minimal() + 
+  labs(x="Median Percent Change by Month 2014-2017",
+       y="",
+       title="Best Performing Stocks") + 
+  scale_x_continuous(label=percent)
+
+
+```
 
 <!-- 
 Things to do: 
