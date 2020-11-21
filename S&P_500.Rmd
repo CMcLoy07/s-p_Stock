@@ -34,7 +34,7 @@ sp <- read_csv("s&p.csv")
 
 The data on the S&P 500 stocks ranges from 2014 through 2017. Each record is a day and covers the open, close, high price, low price, and the volume traded. This equated to `r format(nrow(sp),big.mark=",")` rows of data. The table below gives a sample of the data frame that is being reviewed. 
 
-```{r sp-sample}
+```{r sp-sample, eval=T, echo=F}
 sp %>% 
   slice_sample(n=10) %>% 
   knitr::kable()
@@ -43,7 +43,7 @@ sp %>%
 After gathering the initial dataset, we wanted to create the first calculation in which would help answer the question of which stocks preformed the best from the start of the year to the end of the year. In order to do this I took the percent change of the stock by day from open to close. 
 
 
-```{r pressure, echo=FALSE}
+```{r pressure, eval=T, echo=FALSE}
 sp <- sp %>% 
   mutate(percent_change = ((close-open)/open)*100,
          month_yr = format(ymd(date), "%Y-%m")) 
@@ -54,12 +54,11 @@ sp <- sp %>%
 ### Top Stocks
 
 Let's begin by looking at the stocks that have the best percent change by month for
-the four years. [More words here, Chris]
+the four years. When pulling the top 15 stocks, median % change was used. The reason for this is due to the fact that at any given month a stock may have either climbed extremely high or dropped extremely low. These outliers can drastically throw off the answer to which stocks had a better precentage growth over the 4 year period. Thus, median was used. 
 
-```{r top-stocks}
+In viewing the chart below, we see that the the best preforming stock was NVDA (NVIDIA Corp) with a median % change of 4.5 over the 4 year period. The stock that fell in the bottom of the top 15 was Ulta (something my wife will be happy to hear) with a median % change of 2.9. 
 
-# I'm not 100% sure you mean what you write in the comment, since we don't have pct_change
-# by month. Nevertheless, I'm just your B-student R monkey. Who am I to reason why?
+```{r top-stocks, echo=FALSE, eval=T}
 
 monthly.change <- sp %>% 
   group_by(symbol,month_yr) %>% 
@@ -84,13 +83,19 @@ summary.table <- monthly.change %>%
             median_change = median(percent_change)) %>% 
   arrange(desc(median_change)) %>% 
   mutate(symbol = fct_reorder(symbol,median_change))
+```
 
 
+``` {r top-stocks-table, echo=F, eval=T}
 summary.table %>% 
   head(15) %>% 
   knitr::kable(digits=3,col.names=c("Stock","Mean % Change","Median % Change"))
+```
+
+Now that the information desired is placed into a clean table to view, it is best to see how each stock compare to one another via graph. The below graph shows just how wide spread the top stock was with the bottom stock in the top 15 over the course of 4 years. As you see the curve is extreme at first and then begins to become less of a change. Much like a sideways parabola. 
 
 
+```{r top-stock-graph, echo=F, eval=T}
 ggplot(summary.table %>% 
          filter(median_change > 0.0275),
        aes(x=median_change,y=symbol)) + 
@@ -104,22 +109,4 @@ ggplot(summary.table %>%
 
 ```
 
-<!-- 
-Things to do: 
--view top 10 symbols that have the best % change by month for the 4 years
-- graph the top 10
--check out lags for dplyr 
--append a column that is sector for seasonality 
--->
-
-<!-- trying the code below to get the stocks that are the top changes by year -->
-
-  
-sp %>% 
-  group_by(symbol, yr = year(date), mon = month(date)) %>%
-  summarize(percent = mean(percent_change))
-
-
-
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+The analysis of the S&P 500 proved to very informal. Stocks we might have expected to be at the top such as Apple, were not. Instead we found stocks that covered manufacturing, some tech, travel, and beauty. A wide range of different products, but preforming well over these 4 years. As a thought for future analysis, one may want to get more recent data around the S&P 500 and compare the last 4 years with these and see which ones are still outpreforming. Another test may be logistic regression to create a model on stock prediction. The questions and anlysis are endless! 
